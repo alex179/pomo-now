@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>番茄钟 APP - 完整UI设计</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            border: 3px solid #1f2937; /* Darker border for better contrast */
+            border-radius: 36px; /* Standard rounded corners */
+            overflow: hidden; /* Clip content within the frame */
+            position: relative; /* For absolute positioning of internal elements */
+            flex-shrink: 0; /* Prevent shrinking in flex container */
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Existing gradient */
+        }
+        
+        .timer-gradient {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); /* Primary accent color */
+        }
+        
+        .success-gradient {
+            background: linear-gradient(135deg, #48cc6c 0%, #41b559 100%); /* Green for success states */
+        }
+
+        .blue-gradient {
+            background: linear-gradient(135deg, #56CCF2 0%, #2F80ED 100%); /* Blue for general info or alternative accent */
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.3s ease;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .hover-scale {
+            transition: transform 0.2s ease;
+        }
+        
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+        
+        .input-focus {
+            transition: all 0.3s ease;
+        }
+        
+        .input-focus:focus {
+            border-color: #ff6b6b; /* Use timer color for focus */
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+        
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .loading-spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Custom scrollbar for webkit browsers (optional, as per no non-mobile elements rule) */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        .tab-active {
+            border-bottom-width: 2px;
+            border-color: #ff6b6b; /* Timer color for active tab */
+            color: #ff6b6b;
+            font-weight: 500;
+        }
+        .tab-inactive {
+            color: #6b7280; /* Gray for inactive tabs */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex gap-6 p-6 overflow-x-auto no-scrollbar">
+
+    <div class="phone-frame gradient-bg flex flex-col items-center justify-center relative">
+        <div class="absolute top-20 left-8 w-32 h-32 bg-white opacity-5 rounded-full"></div>
+        <div class="absolute bottom-32 right-6 w-24 h-24 bg-white opacity-5 rounded-full"></div>
+        
+        <div class="text-center fade-in">
+            <div class="mb-12">
+                <div class="w-24 h-24 mx-auto mb-6 bg-white bg-opacity-20 rounded-3xl flex items-center justify-center glass-effect">
+                    <i class="fas fa-seedling text-white text-4xl"></i>
+                </div>
+                <h1 class="text-white text-3xl font-semibold mb-2">番茄时光</h1>
+                <p class="text-white text-opacity-80 text-lg font-light">专注每一刻，成就每一天</p>
+            </div>
+            
+            <div class="space-y-6 mb-16">
+                <div class="flex items-center justify-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clock text-white text-sm"></i>
+                    </div>
+                    <span class="text-white text-opacity-90">25分钟专注时间</span>
+                </div>
+                
+                <div class="flex items-center justify-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-line text-white text-sm"></i>
+                    </div>
+                    <span class="text-white text-opacity-90">效率统计分析</span>
+                </div>
+                
+                <div class="flex items-center justify-center space-x-3">
+                    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-trophy text-white text-sm"></i>
+                    </div>
+                    <span class="text-white text-opacity-90">成就激励系统</span>
+                </div>
+            </div>
+            
+            <button class="bg-white text-black px-12 py-4 rounded-2xl font-medium text-lg hover-scale shadow-lg">
+                开始专注之旅
+            </button>
+        </div>
+        
+        <div class="absolute bottom-8 flex space-x-2">
+            <div class="w-2 h-2 bg-white bg-opacity-60 rounded-full"></div>
+            <div class="w-8 h-2 bg-white rounded-full"></div>
+            <div class="w-2 h-2 bg-white bg-opacity-30 rounded-full"></div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-white flex flex-col">
+        <div class="flex-1 flex flex-col justify-center px-8">
+            <div class="text-center mb-12">
+                <div class="w-20 h-20 mx-auto mb-6 timer-gradient rounded-3xl flex items-center justify-center">
+                    <i class="fas fa-seedling text-white text-3xl"></i>
+                </div>
+                <h1 class="text-black text-3xl font-semibold mb-2">欢迎回来</h1>
+                <p class="text-gray-500 text-lg">登录继续你的专注之旅</p>
+            </div>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <input type="email" placeholder="请输入邮箱地址" 
+                           class="w-full bg-gray-50 border-0 py-4 px-6 rounded-2xl text-black placeholder-gray-500 input-focus">
+                </div>
+                
+                <div class="relative">
+                    <input type="password" placeholder="请输入密码" 
+                           class="w-full bg-gray-50 border-0 py-4 px-6 rounded-2xl text-black placeholder-gray-500 input-focus">
+                    <button class="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="text-right mb-8">
+                <button class="text-red-500 text-sm font-medium">忘记密码？</button>
+            </div>
+            
+            <button class="w-full timer-gradient text-white py-4 rounded-2xl font-medium text-lg hover-scale shadow-lg mb-8">
+                登录
+            </button>
+            
+            <div class="flex items-center mb-6">
+                <div class="flex-1 h-px bg-gray-200"></div>
+                <span class="px-4 text-gray-400 text-sm">其他登录方式</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+            
+            <div class="space-y-3 mb-8">
+                <button class="w-full bg-gray-100 text-black py-3 rounded-2xl flex items-center justify-center space-x-3">
+                    <i class="fab fa-apple text-lg"></i>
+                    <span class="font-light">Apple ID 登录</span>
+                </button>
+                
+                <button class="w-full bg-gray-100 text-black py-3 rounded-2xl flex items-center justify-center space-x-3">
+                    <i class="fab fa-google text-lg"></i>
+                    <span class="font-light">Google 账户登录</span>
+                </button>
+            </div>
+            
+            <div class="text-center">
+                <span class="text-gray-500">还没有账户？</span>
+                <button class="text-red-500 font-medium ml-1">立即注册</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-white flex flex-col items-center justify-center">
+        <div class="text-center">
+            <div class="w-20 h-20 mx-auto mb-8 timer-gradient rounded-3xl flex items-center justify-center">
+                <i class="fas fa-spinner text-white text-2xl loading-spin"></i>
+            </div>
+            <h2 class="text-black text-xl font-medium mb-2">正在登录...</h2>
+            <p class="text-gray-500">请稍候片刻</p>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-white flex flex-col">
+        <div class="flex-1 flex flex-col justify-center px-8">
+            <div class="text-center mb-12">
+                <div class="w-20 h-20 mx-auto mb-6 timer-gradient rounded-3xl flex items-center justify-center">
+                    <i class="fas fa-seedling text-white text-3xl"></i>
+                </div>
+                <h1 class="text-black text-3xl font-semibold mb-2">欢迎回来</h1>
+                <p class="text-gray-500 text-lg">登录继续你的专注之旅</p>
+            </div>
+            
+            <div class="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-exclamation-circle text-red-500"></i>
+                    <span class="text-red-600 font-medium">登录失败，请检查邮箱或密码</span>
+                </div>
+            </div>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <input type="email" placeholder="请输入邮箱地址" value="user@example.com"
+                           class="w-full bg-gray-50 border-2 border-red-300 py-4 px-6 rounded-2xl text-black placeholder-gray-500 shake">
+                </div>
+                
+                <div class="relative">
+                    <input type="password" placeholder="请输入密码" 
+                           class="w-full bg-gray-50 border-2 border-red-300 py-4 px-6 rounded-2xl text-black placeholder-gray-500 shake">
+                    <button class="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="text-right mb-8">
+                <button class="text-red-500 text-sm font-medium">忘记密码？</button>
+            </div>
+            
+            <button class="w-full timer-gradient text-white py-4 rounded-2xl font-medium text-lg hover-scale shadow-lg mb-8">
+                重新登录
+            </button>
+            
+            <div class="flex items-center mb-6">
+                <div class="flex-1 h-px bg-gray-200"></div>
+                <span class="px-4 text-gray-400 text-sm">其他登录方式</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+            
+            <div class="space-y-3 mb-8">
+                <button class="w-full bg-gray-100 text-black py-3 rounded-2xl flex items-center justify-center space-x-3">
+                    <i class="fab fa-apple text-lg"></i>
+                    <span class="font-light">Apple ID 登录</span>
+                </button>
+                
+                <button class="w-full bg-gray-100 text-black py-3 rounded-2xl flex items-center justify-center space-x-3">
+                    <i class="fab fa-google text-lg"></i>
+                    <span class="font-light">Google 账户登录</span>
+                </button>
+            </div>
+            
+            <div class="text-center">
+                <span class="text-gray-500">还没有账户？</span>
+                <button class="text-red-500 font-medium ml-1">立即注册</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-white flex flex-col">
+        <div class="flex items-center px-6 py-4">
+            <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </button>
+        </div>
+        
+        <div class="flex-1 flex flex-col justify-center px-8">
+            <div class="text-center mb-10">
+                <h1 class="text-black text-3xl font-semibold mb-2">创建账户</h1>
+                <p class="text-gray-500 text-lg">开始你的高效专注时光</p>
+            </div>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <input type="text" placeholder="请输入用户名" 
+                           class="w-full bg-gray-50 border-0 py-4 px-6 rounded-2xl text-black placeholder-gray-500 input-focus">
+                </div>
+                
+                <div>
+                    <input type="email" placeholder="请输入邮箱地址" 
+                           class="w-full bg-gray-50 border-0 py-4 px-6 rounded-2xl text-black placeholder-gray-500 input-focus">
+                </div>
+                
+                <div class="relative">
+                    <input type="password" placeholder="设置密码（至少8位）" 
+                           class="w-full bg-gray-50 border-0 py-4 px-6 rounded-2xl text-black placeholder-gray-500 input-focus">
+                    <button class="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                
+                <div class="relative">
+                    <input type="password" placeholder="再次确认密码" 
+                           class="w-full bg-gray-50 border-0 py-4 px-6 rounded-2xl text-black placeholder-gray-500 input-focus">
+                    <button class="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex items-start space-x-3 mb-8">
+                <div class="w-5 h-5 mt-0.5 border-2 border-red-500 rounded bg-red-500 flex items-center justify-center">
+                    <i class="fas fa-check text-white text-xs"></i>
+                </div>
+                <div class="flex-1 text-sm text-gray-600 leading-relaxed">
+                    我已阅读并同意
+                    <button class="text-red-500 font-medium">《用户协议》</button>
+                    和
+                    <button class="text-red-500 font-medium">《隐私政策》</button>
+                </div>
+            </div>
+            
+            <button class="w-full timer-gradient text-white py-4 rounded-2xl font-medium text-lg hover-scale shadow-lg mb-8">
+                注册账户
+            </button>
+            
+            <div class="flex items-center mb-6">
+                <div class="flex-1 h-px bg-gray-200"></div>
+                <span class="px-4 text-gray-400 text-sm">其他注册方式</span>
+                <div class="flex-1 h-px bg-gray-200"></div>
+            </div>
+            
+            <div class="space-y-3 mb-8">
+                <button class="w-full bg-gray-100 text-black py-3 rounded-2xl flex items-center justify-center space-x-3">
+                    <i class="fab fa-apple text-lg"></i>
+                    <span class="font-light">Apple ID 注册</span>
+                </button>
+                
+                <button class="w-full bg-gray-100 text-black py-3 rounded-2xl flex items-center justify-center space-x-3">
+                    <i class="fab fa-google text-lg"></i>
+                    <span class="font-light">Google 账户注册</span>
+                </button>
+            </div>
+            
+            <div class="text-center">
+                <span class="text-gray-500">已有账户？</span>
+                <button class="text-red-500 font-medium ml-1">立即登录</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-white flex flex-col">
+        <div class="flex items-center justify-between px-6 py-4">
+            <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </button>
+            <button class="text-red-500 font-medium">跳过</button>
+        </div>
+        
+        <div class="flex-1 flex flex-col justify-center px-8">
+            <div class="text-center mb-12">
+                <h1 class="text-black text-3xl font-semibold mb-4">个性化设置</h1>
+                <p class="text-gray-500 text-lg">设置你的专注时间偏好</p>
+            </div>
+            
+            <div class="space-y-8">
+                <div class="bg-gray-50 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-black font-medium">工作时间</span>
+                        <span class="text-red-500 text-lg font-semibold">25 分钟</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                            <i class="fas fa-minus text-gray-400"></i>
+                        </button>
+                        <div class="flex-1 bg-gray-200 rounded-full h-2">
+                            <div class="timer-gradient h-2 rounded-full" style="width: 50%"></div>
+                        </div>
+                        <button class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                            <i class="fas fa-plus text-gray-600"></i>
+                        </button>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400 mt-2">
+                        <span>15分钟</span>
+                        <span>60分钟</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-black font-medium">短休息</span>
+                        <span class="text-green-500 text-lg font-semibold">5 分钟</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                            <i class="fas fa-minus text-gray-400"></i>
+                        </button>
+                        <div class="flex-1 bg-gray-200 rounded-full h-2">
+                            <div class="success-gradient h-2 rounded-full" style="width: 30%"></div>
+                        </div>
+                        <button class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                            <i class="fas fa-plus text-gray-600"></i>
+                        </button>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400 mt-2">
+                        <span>3分钟</span>
+                        <span>15分钟</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-black font-medium">长休息</span>
+                        <span class="text-blue-500 text-lg font-semibold">30 分钟</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                            <i class="fas fa-minus text-gray-400"></i>
+                        </button>
+                        <div class="flex-1 bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: 60%"></div>
+                        </div>
+                        <button class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                            <i class="fas fa-plus text-gray-600"></i>
+                        </button>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-400 mt-2">
+                        <span>15分钟</span>
+                        <span>45分钟</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="w-full timer-gradient text-white py-4 rounded-2xl font-medium text-lg hover-scale shadow-lg mt-12">
+                完成设置
+            </button>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-gray-50 flex flex-col">
+        <div class="flex justify-between items-center px-6 py-4 bg-white">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 timer-gradient rounded-xl flex items-center justify-center">
+                    <i class="fas fa-seedling text-white text-sm"></i>
+                </div>
+                <div>
+                    <h2 class="text-black font-semibold">番茄时光</h2>
+                    <p class="text-gray-500 text-xs">今日已完成 0 个番茄钟</p>
+                </div>
+            </div>
+            <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-cog text-gray-600"></i>
+            </button>
+        </div>
+        
+        <div class="flex-1 flex flex-col items-center justify-center px-6">
+            <div class="w-full mb-8">
+                <div class="bg-white rounded-2xl p-4 shadow-sm border-2 border-dashed border-gray-200">
+                    <div class="flex items-center justify-center py-4">
+                        <div class="text-center">
+                            <i class="fas fa-plus text-gray-400 text-2xl mb-2"></i>
+                            <p class="text-gray-500">点击添加今日任务</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="relative mb-12">
+                <svg class="w-64 h-64 progress-ring" viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="54" class="progress-circle" 
+                            stroke="rgba(239, 68, 68, 0.1)" stroke-dasharray="339.292" stroke-dashoffset="0"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#ff6b6b"/>
+                            <stop offset="100%" style="stop-color:#ee5a52"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <div class="text-black text-5xl font-light mb-2">25:00</div>
+                    <div class="text-gray-500 text-sm">准备开始</div>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-6 mb-8">
+                <button class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm opacity-50">
+                    <i class="fas fa-step-backward text-gray-400"></i>
+                </button>
+                
+                <button class="w-20 h-20 timer-gradient rounded-3xl flex items-center justify-center shadow-lg hover-scale">
+                    <i class="fas fa-play text-white text-2xl"></i>
+                </button>
+                
+                <button class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm opacity-50">
+                    <i class="fas fa-step-forward text-gray-400"></i>
+                </button>
+            </div>
+            
+            <div class="bg-gray-100 px-6 py-3 rounded-xl">
+                <p class="text-gray-500 text-sm font-medium">选择任务后开始专注</p>
+            </div>
+        </div>
+        
+        <div class="bg-white px-6 py-4 border-t border-gray-100">
+            <div class="flex justify-around">
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 timer-gradient rounded-xl flex items-center justify-center">
+                        <i class="fas fa-play text-white text-sm"></i>
+                    </div>
+                    <span class="text-red-500 text-xs font-medium">计时器</span>
+                </button>
+                
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-tasks text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">任务</span>
+                </button>
+                
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">统计</span>
+                </button>
+                
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-cog text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">设置</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-gray-50 flex flex-col">
+        <div class="bg-white px-6 py-4 shadow-sm">
+            <h1 class="text-black text-xl font-semibold text-center">任务列表</h1>
+        </div>
+
+        <div class="bg-white px-6 pt-4 flex justify-around border-b border-gray-200">
+            <button class="py-3 px-4 tab-active">全部</button>
+            <button class="py-3 px-4 tab-inactive">进行中</button>
+            <button class="py-3 px-4 tab-inactive">已完成</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+            <div class="bg-white p-4 rounded-2xl shadow-sm flex items-center space-x-4">
+                <button class="w-8 h-8 flex items-center justify-center rounded-full border-2 border-red-500">
+                    </button>
+                <div class="flex-1">
+                    <h3 class="text-black font-medium">完成项目报告</h3>
+                    <p class="text-gray-500 text-sm">预计番茄数: 🍅 x 3</p>
+                </div>
+                <button class="w-10 h-10 timer-gradient rounded-xl flex items-center justify-center hover-scale">
+                    <i class="fas fa-play text-white"></i>
+                </button>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm flex items-center space-x-4">
+                <button class="w-8 h-8 flex items-center justify-center rounded-full border-2 border-gray-300">
+                </button>
+                <div class="flex-1">
+                    <h3 class="text-black font-medium">学习Tailwind CSS新特性</h3>
+                    <p class="text-gray-500 text-sm">预计番茄数: 🍅 x 2</p>
+                </div>
+                <button class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-play text-gray-500"></i>
+                </button>
+            </div>
+             <div class="bg-white p-4 rounded-2xl shadow-sm flex items-center space-x-4 opacity-70">
+                <button class="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 border-2 border-green-500">
+                     <i class="fas fa-check text-white text-xs"></i>
+                </button>
+                <div class="flex-1">
+                    <h3 class="text-black font-medium line-through">回复重要邮件</h3>
+                    <p class="text-gray-500 text-sm">已完成: 🍅 x 1</p>
+                </div>
+                 <button class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-500"></i>
+                </button>
+            </div>
+            <!-- 
+            <div class="text-center py-10">
+                <i class="fas fa-folder-open text-gray-300 text-4xl mb-4"></i>
+                <p class="text-gray-500">还没有任何任务哦，快去添加吧！</p>
+            </div>
+            -->
+        </div>
+
+        <button class="absolute bottom-24 right-6 w-16 h-16 timer-gradient rounded-full flex items-center justify-center shadow-lg hover-scale">
+            <i class="fas fa-plus text-white text-2xl"></i>
+        </button>
+
+        <div class="bg-white px-6 py-4 border-t border-gray-100">
+            <div class="flex justify-around">
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-play text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">计时器</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 timer-gradient rounded-xl flex items-center justify-center">
+                        <i class="fas fa-tasks text-white text-sm"></i>
+                    </div>
+                    <span class="text-red-500 text-xs font-medium">任务</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">统计</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-cog text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">设置</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-gray-50 flex flex-col">
+        <div class="bg-white px-6 py-4 shadow-sm">
+            <h1 class="text-black text-xl font-semibold text-center">任务列表</h1>
+        </div>
+
+        <div class="bg-white px-6 pt-4 flex justify-around border-b border-gray-200">
+            <button class="py-3 px-4 tab-inactive">全部</button>
+            <button class="py-3 px-4 tab-active">进行中</button>
+            <button class="py-3 px-4 tab-inactive">已完成</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+            <div class="bg-white p-4 rounded-2xl shadow-sm flex items-center space-x-4">
+                 <button class="w-8 h-8 flex items-center justify-center rounded-full border-2 border-yellow-500 animate-pulse">
+                     <i class="fas fa-hourglass-half text-yellow-500 text-sm"></i>
+                </button>
+                <div class="flex-1">
+                    <h3 class="text-black font-medium">撰写博客文章</h3>
+                    <p class="text-gray-500 text-sm">当前番茄: 1 / 预计: 🍅 x 4</p>
+                </div>
+                <button class="w-10 h-10 timer-gradient rounded-xl flex items-center justify-center hover-scale">
+                    <i class="fas fa-pause text-white"></i> </button>
+            </div>
+             <div class="text-center py-10 mt-10">
+                <i class="fas fa-coffee text-gray-300 text-4xl mb-4"></i>
+                <p class="text-gray-500">太棒了！没有正在进行的任务。</p>
+                <p class="text-gray-500 text-sm">开始一个新任务吧！</p>
+            </div>
+        </div>
+
+        <button class="absolute bottom-24 right-6 w-16 h-16 timer-gradient rounded-full flex items-center justify-center shadow-lg hover-scale">
+            <i class="fas fa-plus text-white text-2xl"></i>
+        </button>
+
+        <div class="bg-white px-6 py-4 border-t border-gray-100">
+            <div class="flex justify-around">
+                 <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-play text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">计时器</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 timer-gradient rounded-xl flex items-center justify-center">
+                        <i class="fas fa-tasks text-white text-sm"></i>
+                    </div>
+                    <span class="text-red-500 text-xs font-medium">任务</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">统计</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-cog text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">设置</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-gray-50 flex flex-col">
+        <div class="bg-white px-6 py-4 shadow-sm">
+            <h1 class="text-black text-xl font-semibold text-center">任务列表</h1>
+        </div>
+
+        <div class="bg-white px-6 pt-4 flex justify-around border-b border-gray-200">
+            <button class="py-3 px-4 tab-inactive">全部</button>
+            <button class="py-3 px-4 tab-inactive">进行中</button>
+            <button class="py-3 px-4 tab-active">已完成</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+            <div class="bg-white p-4 rounded-2xl shadow-sm flex items-center space-x-4 opacity-70">
+                <button class="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 border-2 border-green-500">
+                     <i class="fas fa-check text-white text-xs"></i>
+                </button>
+                <div class="flex-1">
+                    <h3 class="text-black font-medium line-through">完成项目报告</h3>
+                    <p class="text-gray-500 text-sm">已完成: 🍅 x 3</p>
+                </div>
+                <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-undo text-gray-400"></i> </button>
+            </div>
+             <div class="bg-white p-4 rounded-2xl shadow-sm flex items-center space-x-4 opacity-70">
+                <button class="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 border-2 border-green-500">
+                     <i class="fas fa-check text-white text-xs"></i>
+                </button>
+                <div class="flex-1">
+                    <h3 class="text-black font-medium line-through">回复重要邮件</h3>
+                    <p class="text-gray-500 text-sm">已完成: 🍅 x 1</p>
+                </div>
+                <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-undo text-gray-400"></i>
+                </button>
+            </div>
+        </div>
+
+        <button class="absolute bottom-24 right-6 w-16 h-16 timer-gradient rounded-full flex items-center justify-center shadow-lg hover-scale">
+            <i class="fas fa-plus text-white text-2xl"></i>
+        </button>
+
+        <div class="bg-white px-6 py-4 border-t border-gray-100">
+             <div class="flex justify-around">
+                 <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-play text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">计时器</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 timer-gradient rounded-xl flex items-center justify-center">
+                        <i class="fas fa-tasks text-white text-sm"></i>
+                    </div>
+                    <span class="text-red-500 text-xs font-medium">任务</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">统计</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-cog text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">设置</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-white flex flex-col">
+        <div class="flex items-center justify-between px-6 py-4 bg-white shadow-sm">
+            <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </button>
+            <h1 class="text-black text-xl font-semibold">添加新任务</h1>
+            <div class="w-10"></div> </div>
+
+        <div class="flex-1 p-8 space-y-6">
+            <div>
+                <label for="taskName" class="block text-sm font-medium text-gray-700 mb-1">任务名称</label>
+                <input type="text" id="taskName" placeholder="例如：阅读一章技术书籍"
+                       class="w-full bg-gray-50 border-gray-300 py-3 px-4 rounded-2xl text-black placeholder-gray-400 input-focus">
+            </div>
+
+            <div>
+                <label for="pomodoros" class="block text-sm font-medium text-gray-700 mb-1">预计番茄数</label>
+                <div class="flex items-center space-x-3">
+                    <button class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center text-gray-600 hover:bg-gray-300">-</button>
+                    <input type="number" id="pomodoros" value="1" readonly
+                           class="w-16 text-center bg-gray-50 border-gray-300 py-3 px-2 rounded-2xl text-black input-focus">
+                    <button class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center text-gray-600 hover:bg-gray-300">+</button>
+                    <span class="text-gray-500">🍅</span>
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">任务标签 (可选)</label>
+                <div class="flex space-x-3">
+                    <button class="w-8 h-8 rounded-full bg-red-400 border-2 border-white ring-2 ring-red-400"></button>
+                    <button class="w-8 h-8 rounded-full bg-blue-400 border-2 border-white"></button>
+                    <button class="w-8 h-8 rounded-full bg-green-400 border-2 border-white"></button>
+                    <button class="w-8 h-8 rounded-full bg-yellow-400 border-2 border-white"></button>
+                    <button class="w-8 h-8 rounded-full bg-purple-400 border-2 border-white"></button>
+                </div>
+            </div>
+
+            <div>
+                <label for="taskNotes" class="block text-sm font-medium text-gray-700 mb-1">备注 (可选)</label>
+                <textarea id="taskNotes" rows="3" placeholder="添加一些任务相关的备注信息..."
+                          class="w-full bg-gray-50 border-gray-300 py-3 px-4 rounded-2xl text-black placeholder-gray-400 input-focus"></textarea>
+            </div>
+        </div>
+
+        <div class="px-8 pb-8">
+            <button class="w-full timer-gradient text-white py-4 rounded-2xl font-medium text-lg hover-scale shadow-lg">
+                <i class="fas fa-save mr-2"></i> 保存任务
+            </button>
+        </div>
+    </div>
+
+
+    <div class="phone-frame bg-gray-50 flex flex-col">
+        <div class="bg-white px-6 py-4 shadow-sm">
+            <h1 class="text-black text-xl font-semibold text-center">效率统计</h1>
+        </div>
+
+        <div class="bg-white px-6 pt-4 flex justify-around border-b border-gray-200">
+            <button class="py-3 px-4 tab-active">今日</button>
+            <button class="py-3 px-4 tab-inactive">本周</button>
+            <button class="py-3 px-4 tab-inactive">本月</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm text-center">
+                    <p class="text-gray-500 text-sm mb-1">专注次数</p>
+                    <p class="text-black text-3xl font-semibold">8 <span class="text-lg">🍅</span></p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm text-center">
+                    <p class="text-gray-500 text-sm mb-1">专注时长</p>
+                    <p class="text-black text-3xl font-semibold">3<span class="text-lg">h</span>20<span class="text-lg">m</span></p>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm text-center">
+                <p class="text-gray-500 text-sm mb-1">任务完成率</p>
+                <p class="text-black text-3xl font-semibold">75<span class="text-lg">%</span></p>
+                <p class="text-gray-400 text-xs">(3/4 个任务)</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm">
+                <h3 class="text-black font-medium mb-3">今日专注分布</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center">
+                        <span class="text-xs text-gray-500 w-12">09:00</span>
+                        <div class="flex-1 h-6 bg-red-100 rounded-md overflow-hidden">
+                            <div class="timer-gradient h-full" style="width: 60%;"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-xs text-gray-500 w-12">10:00</span>
+                        <div class="flex-1 h-6 bg-red-100 rounded-md overflow-hidden">
+                            <div class="timer-gradient h-full" style="width: 80%;"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-xs text-gray-500 w-12">11:00</span>
+                        <div class="flex-1 h-6 bg-red-100 rounded-md overflow-hidden">
+                             <div class="timer-gradient h-full" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                     <div class="flex items-center">
+                        <span class="text-xs text-gray-500 w-12">14:00</span>
+                        <div class="flex-1 h-6 bg-red-100 rounded-md overflow-hidden">
+                             <div class="timer-gradient h-full" style="width: 70%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div class="bg-white p-4 rounded-2xl shadow-sm">
+                <h3 class="text-black font-medium mb-3">今日完成的任务</h3>
+                <ul class="space-y-2">
+                    <li class="flex items-center justify-between text-sm">
+                        <span class="text-gray-700">完成项目报告</span>
+                        <span class="text-green-500 font-medium">🍅 x 3</span>
+                    </li>
+                    <li class="flex items-center justify-between text-sm">
+                        <span class="text-gray-700">回复重要邮件</span>
+                        <span class="text-green-500 font-medium">🍅 x 1</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="bg-white px-6 py-4 border-t border-gray-100">
+            <div class="flex justify-around">
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-play text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">计时器</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-tasks text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">任务</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 timer-gradient rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-white text-sm"></i>
+                    </div>
+                    <span class="text-red-500 text-xs font-medium">统计</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-cog text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">设置</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-gray-50 flex flex-col">
+        <div class="bg-white px-6 py-4 shadow-sm">
+            <h1 class="text-black text-xl font-semibold text-center">效率统计</h1>
+        </div>
+
+        <div class="bg-white px-6 pt-4 flex justify-around border-b border-gray-200">
+            <button class="py-3 px-4 tab-inactive">今日</button>
+            <button class="py-3 px-4 tab-active">本周</button>
+            <button class="py-3 px-4 tab-inactive">本月</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm text-center">
+                    <p class="text-gray-500 text-sm mb-1">专注次数</p>
+                    <p class="text-black text-3xl font-semibold">42 <span class="text-lg">🍅</span></p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm text-center">
+                    <p class="text-gray-500 text-sm mb-1">总专注时长</p>
+                    <p class="text-black text-3xl font-semibold">18<span class="text-lg">h</span>15<span class="text-lg">m</span></p>
+                </div>
+            </div>
+             <div class="bg-white p-4 rounded-2xl shadow-sm text-center">
+                <p class="text-gray-500 text-sm mb-1">平均每日专注</p>
+                <p class="text-black text-3xl font-semibold">6 <span class="text-lg">🍅</span></p>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm">
+                <h3 class="text-black font-medium mb-3">本周专注趋势</h3>
+                <div class="flex justify-around items-end h-32">
+                    <div class="text-center">
+                        <div class="w-6 timer-gradient rounded-t-md" style="height: 60%;"></div>
+                        <span class="text-xs text-gray-500">周一</span>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-6 timer-gradient rounded-t-md" style="height: 80%;"></div>
+                        <span class="text-xs text-gray-500">周二</span>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-6 timer-gradient rounded-t-md" style="height: 50%;"></div>
+                        <span class="text-xs text-gray-500">周三</span>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-6 timer-gradient rounded-t-md" style="height: 90%;"></div>
+                        <span class="text-xs text-gray-500">周四</span>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-6 timer-gradient rounded-t-md" style="height: 70%;"></div>
+                        <span class="text-xs text-gray-500">周五</span>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-6 bg-gray-200 rounded-t-md" style="height: 30%;"></div>
+                        <span class="text-xs text-gray-500">周六</span>
+                    </div>
+                     <div class="text-center">
+                        <div class="w-6 bg-gray-200 rounded-t-md" style="height: 20%;"></div>
+                        <span class="text-xs text-gray-500">周日</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white px-6 py-4 border-t border-gray-100">
+            <div class="flex justify-around">
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-play text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">计时器</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-tasks text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">任务</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 timer-gradient rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-white text-sm"></i>
+                    </div>
+                    <span class="text-red-500 text-xs font-medium">统计</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-cog text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">设置</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-gray-50 flex flex-col">
+        <div class="bg-white px-6 py-4 shadow-sm">
+            <h1 class="text-black text-xl font-semibold text-center">效率统计</h1>
+        </div>
+
+        <div class="bg-white px-6 pt-4 flex justify-around border-b border-gray-200">
+            <button class="py-3 px-4 tab-inactive">今日</button>
+            <button class="py-3 px-4 tab-inactive">本周</button>
+            <button class="py-3 px-4 tab-active">本月</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm text-center">
+                    <p class="text-gray-500 text-sm mb-1">专注次数</p>
+                    <p class="text-black text-3xl font-semibold">158 <span class="text-lg">🍅</span></p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm text-center">
+                    <p class="text-gray-500 text-sm mb-1">总专注时长</p>
+                    <p class="text-black text-3xl font-semibold">65<span class="text-lg">h</span>40<span class="text-lg">m</span></p>
+                </div>
+            </div>
+             <div class="bg-white p-4 rounded-2xl shadow-sm text-center">
+                <p class="text-gray-500 text-sm mb-1">最专注的一天</p>
+                <p class="text-black text-2xl font-semibold">5月15日 (12 🍅)</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm">
+                <h3 class="text-black font-medium mb-3">本月专注日历 (五月)</h3>
+                <div class="grid grid-cols-7 gap-1 text-center text-xs">
+                    <span class="text-gray-500">一</span><span class="text-gray-500">二</span><span class="text-gray-500">三</span><span class="text-gray-500">四</span><span class="text-gray-500">五</span><span class="text-gray-500">六</span><span class="text-gray-500">日</span>
+                    <span></span><span></span>
+                    <span class="p-1 rounded-full">1</span> <span class="p-1 bg-red-100 rounded-full">2</span> <span class="p-1 bg-red-200 rounded-full">3</span> <span class="p-1 rounded-full">4</span> <span class="p-1 rounded-full">5</span>
+                    <span class="p-1 bg-red-300 rounded-full">6</span> <span class="p-1 bg-red-100 rounded-full">7</span> <span class="p-1 rounded-full">8</span> <span class="p-1 bg-red-200 rounded-full">9</span> <span class="p-1 bg-red-400 rounded-full">10</span>
+                    <span class="p-1 rounded-full">11</span> <span class="p-1 rounded-full">12</span> <span class="p-1 bg-red-100 rounded-full">13</span> <span class="p-1 bg-red-200 rounded-full">14</span> <span class="p-1 timer-gradient text-white rounded-full">15</span>
+                    <span class="p-1 rounded-full">16</span> <span class="p-1 bg-red-300 rounded-full">17</span> <span class="p-1 bg-red-100 rounded-full">18</span> <span class="p-1 rounded-full">19</span> <span class="p-1 bg-red-200 rounded-full">20</span>
+                    <span class="p-1 rounded-full">21</span> <span class="p-1 rounded-full">22</span> <span class="p-1 bg-red-100 rounded-full">23</span> <span class="p-1 bg-red-100 rounded-full">24</span> <span class="p-1 rounded-full">25</span>
+                    <span class="p-1 rounded-full">26</span> <span class="p-1 rounded-full">27</span> <span class="p-1 rounded-full">28</span> <span class="p-1 rounded-full">29</span> <span class="p-1 rounded-full">30</span>
+                    <span class="p-1 rounded-full">31</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white px-6 py-4 border-t border-gray-100">
+            <div class="flex justify-around">
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-play text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">计时器</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-tasks text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">任务</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 timer-gradient rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-white text-sm"></i>
+                    </div>
+                    <span class="text-red-500 text-xs font-medium">统计</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-cog text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">设置</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-gray-50 flex flex-col">
+        <div class="bg-white px-6 py-4 shadow-sm">
+            <h1 class="text-black text-xl font-semibold text-center">设置</h1>
+        </div>
+
+        <div class="flex-1 overflow-y-auto py-6 no-scrollbar">
+            <div class="px-6 space-y-1">
+                <p class="text-xs text-gray-400 font-medium uppercase px-1 pt-4 pb-1">通用</p>
+                <button class="w-full flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm hover:bg-gray-100">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                           <i class="fas fa-sliders-h text-red-500"></i>
+                        </div>
+                        <span class="text-black">专注设置</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+                <button class="w-full flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm hover:bg-gray-100">
+                     <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                           <i class="fas fa-bell text-blue-500"></i>
+                        </div>
+                        <span class="text-black">提醒设置</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+
+                <p class="text-xs text-gray-400 font-medium uppercase px-1 pt-4 pb-1">账户</p>
+                <button class="w-full flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm hover:bg-gray-100">
+                     <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                           <i class="fas fa-user-shield text-green-500"></i>
+                        </div>
+                        <span class="text-black">账户与安全</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+
+                <p class="text-xs text-gray-400 font-medium uppercase px-1 pt-4 pb-1">关于</p>
+                <button class="w-full flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm hover:bg-gray-100">
+                     <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                           <i class="fas fa-info-circle text-purple-500"></i>
+                        </div>
+                        <span class="text-black">关于番茄时光</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+                 <button class="w-full flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm hover:bg-gray-100">
+                     <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                           <i class="fas fa-star text-yellow-500"></i>
+                        </div>
+                        <span class="text-black">评价我们</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+            </div>
+
+            <div class="px-6 mt-8">
+                 <button class="w-full bg-white text-red-500 py-3 rounded-2xl font-medium text-lg hover:bg-red-50 shadow-sm border border-red-200">
+                    退出登录
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white px-6 py-4 border-t border-gray-100">
+            <div class="flex justify-around">
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-play text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">计时器</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-tasks text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">任务</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-chart-bar text-gray-400 text-sm"></i>
+                    </div>
+                    <span class="text-gray-400 text-xs">统计</span>
+                </button>
+                <button class="flex flex-col items-center space-y-1">
+                    <div class="w-8 h-8 timer-gradient rounded-xl flex items-center justify-center">
+                        <i class="fas fa-cog text-white text-sm"></i>
+                    </div>
+                    <span class="text-red-500 text-xs font-medium">设置</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-gray-50 flex flex-col">
+        <div class="flex items-center px-6 py-4 bg-white shadow-sm">
+            <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </button>
+            <h1 class="text-black text-xl font-semibold flex-1 text-center">专注设置</h1>
+            <div class="w-10"></div> </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-black font-medium">工作时间</span>
+                    <span class="text-red-500 text-lg font-semibold">25 分钟</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center shadow-sm text-gray-600">-</button>
+                    <div class="flex-1 bg-gray-100 rounded-full h-2">
+                        <div class="timer-gradient h-2 rounded-full" style="width: 50%;"></div>
+                    </div>
+                    <button class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center shadow-sm text-gray-600">+</button>
+                </div>
+                <div class="flex justify-between text-xs text-gray-400 mt-2">
+                    <span>15分钟</span><span>60分钟</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-black font-medium">短休息</span>
+                    <span class="text-green-500 text-lg font-semibold">5 分钟</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                     <button class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center shadow-sm text-gray-600">-</button>
+                    <div class="flex-1 bg-gray-100 rounded-full h-2">
+                        <div class="success-gradient h-2 rounded-full" style="width: 30%;"></div>
+                    </div>
+                     <button class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center shadow-sm text-gray-600">+</button>
+                </div>
+                 <div class="flex justify-between text-xs text-gray-400 mt-2">
+                    <span>3分钟</span><span>15分钟</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-black font-medium">长休息</span>
+                    <span class="text-blue-500 text-lg font-semibold">15 分钟</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                     <button class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center shadow-sm text-gray-600">-</button>
+                    <div class="flex-1 bg-gray-100 rounded-full h-2">
+                        <div class="blue-gradient h-2 rounded-full" style="width: 50%;"></div>
+                    </div>
+                     <button class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center shadow-sm text-gray-600">+</button>
+                </div>
+                 <div class="flex justify-between text-xs text-gray-400 mt-2">
+                    <span>10分钟</span><span>30分钟</span>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-black font-medium">长休息间隔</span>
+                    <span class="text-black text-lg font-medium">每 <input type="number" value="4" class="w-12 text-center rounded-lg border-gray-300 focus:ring-red-500 focus:border-red-500"> 个番茄钟</span>
+                </div>
+                 <p class="text-xs text-gray-500 mt-1">完成设定数量的番茄钟后，将开始一次长休息。</p>
+            </div>
+        </div>
+        
+        <div class="px-6 pb-6 pt-2 bg-gray-50">
+            <button class="w-full timer-gradient text-white py-3.5 rounded-2xl font-medium text-lg hover-scale shadow-lg">
+                保存设置
+            </button>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-gray-50 flex flex-col">
+        <div class="flex items-center px-6 py-4 bg-white shadow-sm">
+            <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </button>
+            <h1 class="text-black text-xl font-semibold flex-1 text-center">提醒设置</h1>
+            <div class="w-10"></div> </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+            <div class="bg-white p-4 rounded-2xl shadow-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-black font-medium">专注结束提醒</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" value="" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                    </label>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-black font-medium">休息结束提醒</span>
+                     <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" value="" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                    </label>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm">
+                <label for="reminderSound" class="block text-black font-medium mb-2">提醒声音</label>
+                <select id="reminderSound" class="w-full bg-gray-50 border-gray-300 py-3 px-4 rounded-xl text-black input-focus">
+                    <option>默认铃声</option>
+                    <option>清脆鸟鸣</option>
+                    <option>流水声</option>
+                    <option>轻柔钢琴</option>
+                    <option>仅震动</option>
+                    <option>无提示</option>
+                </select>
+            </div>
+             <div class="bg-white p-4 rounded-2xl shadow-sm">
+                <label for="reminderVolume" class="block text-black font-medium mb-2">提醒音量</label>
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-volume-down text-gray-400"></i>
+                    <input type="range" id="reminderVolume" min="0" max="100" value="70" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-500">
+                    <i class="fas fa-volume-up text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="px-6 pb-6 pt-2 bg-gray-50">
+            <button class="w-full timer-gradient text-white py-3.5 rounded-2xl font-medium text-lg hover-scale shadow-lg">
+                保存设置
+            </button>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-gray-50 flex flex-col">
+        <div class="flex items-center px-6 py-4 bg-white shadow-sm">
+            <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </button>
+            <h1 class="text-black text-xl font-semibold flex-1 text-center">账户与安全</h1>
+            <div class="w-10"></div> </div>
+
+        <div class="flex-1 overflow-y-auto py-6 no-scrollbar">
+            <div class="px-6 space-y-1">
+                 <button class="w-full flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm hover:bg-gray-100">
+                    <div class="flex items-center space-x-3">
+                         <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                           <i class="fas fa-user-circle text-gray-500"></i>
+                        </div>
+                        <div>
+                            <span class="text-black block">用户名</span>
+                            <span class="text-gray-500 text-sm">番茄爱好者</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+                <button class="w-full flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm hover:bg-gray-100">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                           <i class="fas fa-envelope text-gray-500"></i>
+                        </div>
+                         <div>
+                            <span class="text-black block">邮箱地址</span>
+                            <span class="text-gray-500 text-sm">user@example.com</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+                <button class="w-full flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm hover:bg-gray-100">
+                     <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                           <i class="fas fa-key text-gray-500"></i>
+                        </div>
+                        <span class="text-black">修改密码</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+
+                <p class="text-xs text-gray-400 font-medium uppercase px-1 pt-4 pb-1">关联账户</p>
+                <button class="w-full flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm hover:bg-gray-100">
+                     <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                           <i class="fab fa-apple text-black"></i>
+                        </div>
+                        <span class="text-black">Apple ID</span>
+                    </div>
+                    <span class="text-green-500 text-sm font-medium">已关联</span>
+                </button>
+                 <button class="w-full flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm hover:bg-gray-100">
+                     <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                           <i class="fab fa-google text-red-500"></i>
+                        </div>
+                        <span class="text-black">Google 账户</span>
+                    </div>
+                    <span class="text-gray-400 text-sm">未关联</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-white flex flex-col">
+        <div class="flex items-center px-6 py-4 shadow-sm">
+            <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </button>
+            <h1 class="text-black text-xl font-semibold flex-1 text-center">修改密码</h1>
+            <div class="w-10"></div> </div>
+        
+        <div class="px-8 pt-6">
+            <div class="flex items-center justify-center space-x-2 mb-2">
+                <div class="w-6 h-6 timer-gradient rounded-full flex items-center justify-center text-white text-xs font-medium">1</div>
+                <div class="flex-1 h-1 bg-red-200 rounded-full"></div>
+                <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xs font-medium">2</div>
+                <div class="flex-1 h-1 bg-gray-200 rounded-full"></div>
+                <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xs font-medium">3</div>
+            </div>
+            <p class="text-center text-sm text-gray-500">步骤 1/3: 验证身份</p>
+        </div>
+
+
+        <div class="flex-1 flex flex-col justify-center px-8 space-y-6">
+            <div class="text-center">
+                <i class="fas fa-shield-alt text-red-400 text-5xl mb-4"></i>
+                <h2 class="text-black text-2xl font-medium mb-2">验证当前密码</h2>
+                <p class="text-gray-500">为了您的账户安全，请输入当前使用的密码。</p>
+            </div>
+            <div class="relative">
+                <input type="password" placeholder="请输入当前密码"
+                       class="w-full bg-gray-50 border-gray-300 py-4 px-6 rounded-2xl text-black placeholder-gray-400 input-focus">
+                <button class="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="px-8 pb-8">
+            <button class="w-full timer-gradient text-white py-4 rounded-2xl font-medium text-lg hover-scale shadow-lg">
+                下一步
+            </button>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-white flex flex-col">
+        <div class="flex items-center px-6 py-4 shadow-sm">
+            <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </button>
+            <h1 class="text-black text-xl font-semibold flex-1 text-center">修改密码</h1>
+            <div class="w-10"></div> </div>
+
+         <div class="px-8 pt-6">
+            <div class="flex items-center justify-center space-x-2 mb-2">
+                <div class="w-6 h-6 success-gradient rounded-full flex items-center justify-center text-white text-xs font-medium">
+                    <i class="fas fa-check text-xs"></i>
+                </div>
+                <div class="flex-1 h-1 success-gradient rounded-full"></div>
+                <div class="w-6 h-6 timer-gradient rounded-full flex items-center justify-center text-white text-xs font-medium">2</div>
+                <div class="flex-1 h-1 bg-red-200 rounded-full"></div>
+                <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xs font-medium">3</div>
+            </div>
+            <p class="text-center text-sm text-gray-500">步骤 2/3: 设置新密码</p>
+        </div>
+
+        <div class="flex-1 flex flex-col justify-center px-8 space-y-6">
+             <div class="text-center">
+                <i class="fas fa-key text-red-400 text-5xl mb-4"></i>
+                <h2 class="text-black text-2xl font-medium mb-2">设置新密码</h2>
+                <p class="text-gray-500">请输入您的新密码，并再次确认。</p>
+            </div>
+            <div class="relative">
+                <input type="password" placeholder="请输入新密码 (至少8位)"
+                       class="w-full bg-gray-50 border-gray-300 py-4 px-6 rounded-2xl text-black placeholder-gray-400 input-focus">
+                <button class="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+            <div class="flex space-x-1 h-1.5">
+                <div class="flex-1 bg-red-500 rounded-full"></div>
+                <div class="flex-1 bg-yellow-500 rounded-full"></div>
+                <div class="flex-1 bg-gray-200 rounded-full"></div>
+                <div class="flex-1 bg-gray-200 rounded-full"></div>
+            </div>
+            <p class="text-xs text-yellow-600 text-center -mt-4">密码强度：中</p>
+
+            <div class="relative">
+                <input type="password" placeholder="再次确认新密码"
+                       class="w-full bg-gray-50 border-gray-300 py-4 px-6 rounded-2xl text-black placeholder-gray-400 input-focus">
+                <button class="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="px-8 pb-8">
+            <button class="w-full timer-gradient text-white py-4 rounded-2xl font-medium text-lg hover-scale shadow-lg">
+                确认修改
+            </button>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-white flex flex-col">
+         <div class="flex items-center px-6 py-4 shadow-sm">
+            <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </button>
+            <h1 class="text-black text-xl font-semibold flex-1 text-center">修改密码</h1>
+            <div class="w-10"></div> </div>
+
+        <div class="px-8 pt-6">
+            <div class="flex items-center justify-center space-x-2 mb-2">
+                <div class="w-6 h-6 success-gradient rounded-full flex items-center justify-center text-white text-xs font-medium">
+                     <i class="fas fa-check text-xs"></i>
+                </div>
+                <div class="flex-1 h-1 success-gradient rounded-full"></div>
+                 <div class="w-6 h-6 success-gradient rounded-full flex items-center justify-center text-white text-xs font-medium">
+                     <i class="fas fa-check text-xs"></i>
+                </div>
+                <div class="flex-1 h-1 success-gradient rounded-full"></div>
+                <div class="w-6 h-6 timer-gradient rounded-full flex items-center justify-center text-white text-xs font-medium">3</div>
+            </div>
+             <p class="text-center text-sm text-gray-500">步骤 3/3: 修改成功</p>
+        </div>
+
+        <div class="flex-1 flex flex-col items-center justify-center text-center px-8">
+            <div class="w-24 h-24 success-gradient rounded-full flex items-center justify-center mb-8">
+                <i class="fas fa-check text-white text-4xl"></i>
+            </div>
+            <h2 class="text-black text-2xl font-semibold mb-3">密码修改成功！</h2>
+            <p class="text-gray-500 mb-10">您的密码已更新，请使用新密码登录。建议您妥善保管好新密码。</p>
+        </div>
+        
+        <div class="px-8 pb-8">
+            <button class="w-full timer-gradient text-white py-4 rounded-2xl font-medium text-lg hover-scale shadow-lg">
+                返回设置
+            </button>
+        </div>
+    </div>
+
+    <div class="phone-frame bg-white flex flex-col">
+        <div class="flex items-center px-6 py-4 shadow-sm">
+            <button class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-arrow-left text-gray-600"></i>
+            </button>
+            <h1 class="text-black text-xl font-semibold flex-1 text-center">修改密码</h1>
+            <div class="w-10"></div> </div>
+        
+        <div class="px-8 pt-6">
+            <div class="flex items-center justify-center space-x-2 mb-2">
+                <div class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-medium">1</div>
+                <div class="flex-1 h-1 bg-red-200 rounded-full"></div>
+                <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xs font-medium">2</div>
+                <div class="flex-1 h-1 bg-gray-200 rounded-full"></div>
+                <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xs font-medium">3</div>
+            </div>
+            <p class="text-center text-sm text-gray-500">步骤 1/3: 验证身份</p>
+        </div>
+
+        <div class="flex-1 flex flex-col justify-center px-8 space-y-6">
+             <div class="text-center">
+                <i class="fas fa-exclamation-triangle text-yellow-500 text-5xl mb-4"></i>
+                <h2 class="text-black text-2xl font-medium mb-2">验证失败</h2>
+            </div>
+            <div class="bg-red-50 border border-red-200 rounded-2xl p-4">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-times-circle text-red-500"></i>
+                    <span class="text-red-600 font-medium">当前密码不正确，请重试。</span>
+                </div>
+            </div>
+            <div class="relative">
+                <input type="password" placeholder="请输入当前密码"
+                       class="w-full bg-gray-50 border-2 border-red-300 py-4 px-6 rounded-2xl text-black placeholder-gray-400 input-focus shake">
+                <button class="absolute right-6 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+             <div class="text-right">
+                <button class="text-red-500 text-sm font-medium">忘记密码？</button>
+            </div>
+        </div>
+        
+        <div class="px-8 pb-8">
+            <button class="w-full timer-gradient text-white py-4 rounded-2xl font-medium text-lg hover-scale shadow-lg">
+                重新验证
+            </button>
+        </div>
+    </div>
+
+
+</body>
+</html>
