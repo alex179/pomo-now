@@ -68,9 +68,21 @@ func (h *TaskHandler) Task(w http.ResponseWriter, r *http.Request) {
 
 // listTasks 获取任务列表
 func (h *TaskHandler) listTasks(w http.ResponseWriter, r *http.Request, user *model.User) {
-	tasks, err := h.taskService.ListTasks(r.Context(), user.ID)
+	// Get status query parameter
+	statusFilter := r.URL.Query().Get("status")
+
+	tasks, err := h.taskService.ListTasks(r.Context(), user.ID, model.TaskStatus(statusFilter))
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		if appErr, ok := err.(*apperrors.AppError); ok {
+			switch appErr.Code {
+			case apperrors.ErrBadRequest:
+				response.Error(w, http.StatusBadRequest, appErr.Message)
+			default:
+				response.Error(w, http.StatusInternalServerError, appErr.Error())
+			}
+		} else {
+			response.Error(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 
@@ -79,15 +91,39 @@ func (h *TaskHandler) listTasks(w http.ResponseWriter, r *http.Request, user *mo
 
 // createTask 创建新任务
 func (h *TaskHandler) createTask(w http.ResponseWriter, r *http.Request, user *model.User) {
-	var req model.TaskCreate
+	var req model.TaskCreate // This struct contains Title and EstimatedPomodoros
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		response.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	task, err := h.taskService.CreateTask(r.Context(), user.ID, &req)
+	// Validate incoming data (though service layer also validates)
+	// Basic validation can happen here too, e.g. presence of required fields
+	if req.Title == "" {
+		response.Error(w, http.StatusBadRequest, "title is required")
+		return
+	}
+	if req.EstimatedPomodoros <= 0 {
+		// Assuming EstimatedPomodoros is required and must be positive.
+		// The model.TaskCreate has validate tags, but direct check here is also fine.
+		response.Error(w, http.StatusBadRequest, "estimated_pomodoros must be positive")
+		return
+	}
+
+
+	task, err := h.taskService.CreateTask(r.Context(), user.ID, req.Title, req.EstimatedPomodoros)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		// Determine appropriate HTTP status code based on the error type from service
+		if appErr, ok := err.(*apperrors.AppError); ok {
+			switch appErr.Code {
+			case apperrors.ErrBadRequest:
+				response.Error(w, http.StatusBadRequest, appErr.Message)
+			default:
+				response.Error(w, http.StatusInternalServerError, appErr.Error())
+			}
+		} else {
+			response.Error(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 
@@ -121,9 +157,29 @@ func (h *TaskHandler) updateTask(w http.ResponseWriter, r *http.Request, user *m
 		return
 	}
 
-	task, err := h.taskService.UpdateTask(r.Context(), taskID, user.ID, &req)
+	// Ensure at least one field is provided for update
+	if req.Title == nil && req.EstimatedPomodoros == nil && req.Status == nil {
+		response.Error(w, http.StatusBadRequest, "at least one field must be provided for update")
+		return
+	}
+
+
+	task, err := h.taskService.UpdateTask(r.Context(), taskID, user.ID, req) // Pass req by value as service expects model.TaskUpdate
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		if appErr, ok := err.(*apperrors.AppError); ok {
+			switch appErr.Code {
+			case apperrors.ErrTaskNotFound:
+				response.Error(w, http.StatusNotFound, appErr.Message)
+			case apperrors.ErrNotAuthorized:
+				response.Error(w, http.StatusForbidden, appErr.Message)
+			case apperrors.ErrBadRequest:
+				response.Error(w, http.StatusBadRequest, appErr.Message)
+			default:
+				response.Error(w, http.StatusInternalServerError, appErr.Error())
+			}
+		} else {
+			response.Error(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 
@@ -132,8 +188,20 @@ func (h *TaskHandler) updateTask(w http.ResponseWriter, r *http.Request, user *m
 
 // deleteTask 删除任务
 func (h *TaskHandler) deleteTask(w http.ResponseWriter, r *http.Request, user *model.User, taskID string) {
-	if err := h.taskService.DeleteTask(r.Context(), taskID, user.ID); err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+	err := h.taskService.DeleteTask(r.Context(), taskID, user.ID)
+	if err != nil {
+		if appErr, ok := err.(*apperrors.AppError); ok {
+			switch appErr.Code {
+			case apperrors.ErrTaskNotFound:
+				response.Error(w, http.StatusNotFound, appErr.Message)
+			case apperrors.ErrNotAuthorized: // This might be covered by TaskNotFound if DeleteTask doesn't distinguish
+				response.Error(w, http.StatusForbidden, appErr.Message)
+			default:
+				response.Error(w, http.StatusInternalServerError, appErr.Error())
+			}
+		} else {
+			response.Error(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 

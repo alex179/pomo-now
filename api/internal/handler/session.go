@@ -69,22 +69,39 @@ func (h *SessionHandler) listSessions(w http.ResponseWriter, r *http.Request, us
 	response.Success(w, sessions)
 }
 
-// createSession 创建新会话
+// createSession (renamed to recordSession internally for clarity, though called by Sessions on POST)
+// This method will handle POST /api/sessions
 func (h *SessionHandler) createSession(w http.ResponseWriter, r *http.Request, user *model.User) {
-	var req model.SessionCreate
+	var req model.RecordSessionRequest // Use the new request struct
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+		response.Error(w, http.StatusBadRequest, "invalid request body: "+err.Error())
 		return
 	}
-	session, err := h.sessionService.CreateSession(user.ID, &req)
+
+	// Basic validation for required fields can be done here, though service also validates.
+	// model.RecordSessionRequest has validate tags that could be used with a validator.
+	// For now, rely on service validation for DurationMinutes and Type.
+
+	session, err := h.sessionService.RecordSession(r.Context(), user.ID, req) // Call the new service method
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err.Error())
+		if appErr, ok := err.(*apperrors.AppError); ok {
+			switch appErr.Code {
+			case apperrors.ErrBadRequest:
+				response.Error(w, http.StatusBadRequest, appErr.Message)
+			// Add other specific error code mappings if needed
+			default:
+				response.Error(w, http.StatusInternalServerError, appErr.Error())
+			}
+		} else {
+			response.Error(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 	response.Created(w, session)
 }
 
 // getCurrentSession 获取当前会话
+// Note: This and updateCurrentSession might be obsolete due to store/service changes
 func (h *SessionHandler) getCurrentSession(w http.ResponseWriter, r *http.Request, user *model.User) {
 	session, err := h.sessionService.GetCurrentSession(user.ID)
 	if err != nil {
@@ -92,6 +109,42 @@ func (h *SessionHandler) getCurrentSession(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	response.Success(w, session)
+}
+
+// GetStatsHandler handles requests for user statistics.
+func (h *SessionHandler) GetStatsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		response.Error(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	user, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	period := r.URL.Query().Get("period") // e.g., "today", "week", "month"
+	if period == "" {
+		period = "today" // Default period
+	}
+
+	stats, err := h.sessionService.GetStatistics(r.Context(), user.ID, period)
+	if err != nil {
+		if appErr, ok := err.(*apperrors.AppError); ok {
+			switch appErr.Code {
+			case apperrors.ErrBadRequest: // If period validation was stricter in service
+				response.Error(w, http.StatusBadRequest, appErr.Message)
+			default:
+				response.Error(w, http.StatusInternalServerError, appErr.Error())
+			}
+		} else {
+			response.Error(w, http.StatusInternalServerError, err.Error())
+		}
+		return
+	}
+
+	response.Success(w, stats)
 }
 
 // updateCurrentSession 更新当前会话

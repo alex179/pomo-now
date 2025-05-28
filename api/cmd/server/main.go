@@ -36,12 +36,14 @@ func main() {
 	authService := service.NewAuthService(dbStore, jwtSecret)
 	taskService := service.NewTaskService(dbStore)
 	sessionService := service.NewSessionService(dbStore)
+	userService := service.NewUserService(dbStore) // Initialize UserService
 
 	// 创建处理器实例
 	authHandler := handler.NewAuthHandler(authService)
 	taskHandler := handler.NewTaskHandler(taskService)
 	sessionHandler := handler.NewSessionHandler(sessionService)
-	statsHandler := handler.NewStatsHandler(sessionService)
+	userHandler := handler.NewUserHandler(userService) // Initialize UserHandler
+	// statsHandler := handler.NewStatsHandler(sessionService) // Commented out if NewStatsHandler and its methods are fully replaced by SessionHandler for these stats
 
 	// 创建新的ServeMux
 	mux := http.NewServeMux()
@@ -49,31 +51,53 @@ func main() {
 	// API路由
 	apiMux := http.NewServeMux()
 
-	// 认证路由
-	apiMux.HandleFunc("POST /api/auth/register", authHandler.Register)
-	apiMux.HandleFunc("POST /api/auth/login", authHandler.Login)
-	apiMux.HandleFunc("POST /api/auth/apple", authHandler.AppleLogin)
+	// 创建新的ServeMux for main router
+	mux := http.NewServeMux()
 
+	// Public routes (no auth middleware)
+	authRoutes := http.NewServeMux()
+	authRoutes.HandleFunc("POST /api/auth/register", authHandler.Register)
+	authRoutes.HandleFunc("POST /api/auth/login", authHandler.Login)
+	authRoutes.HandleFunc("POST /api/auth/apple/login", authHandler.AppleLogin)
+
+	// Apply general middlewares (logging, CORS) to public auth routes
+	publicHandler := middleware.LoggingMiddleware(
+		middleware.CORSMiddleware(authRoutes),
+	)
+	mux.Handle("/api/auth/", publicHandler) 
+
+	// API routes that require authentication
+	protectedApiMux := http.NewServeMux()
+	// Add ChangePassword route to protectedApiMux as it requires authentication
+	protectedApiMux.HandleFunc("POST /api/auth/change-password", authHandler.ChangePasswordHandler)
 	// 任务路由
-	apiMux.HandleFunc("/api/tasks", taskHandler.Tasks)
-	apiMux.HandleFunc("/api/tasks/{id}", taskHandler.Task)
-
+	protectedApiMux.HandleFunc("/api/tasks", taskHandler.Tasks)
+	protectedApiMux.HandleFunc("/api/tasks/{id}", taskHandler.Task)
 	// 会话路由
-	apiMux.HandleFunc("/api/sessions", sessionHandler.Sessions)
-	apiMux.HandleFunc("/api/sessions/current", sessionHandler.CurrentSession)
+	protectedApiMux.HandleFunc("/api/sessions", sessionHandler.Sessions)
+	// protectedApiMux.HandleFunc("/api/sessions/current", sessionHandler.CurrentSession) // Assuming CurrentSession routes are handled if still relevant, or removed if obsolete
+	
+	// 统计路由 - Changed to use sessionHandler.GetStatsHandler
+	protectedApiMux.HandleFunc("GET /api/stats", sessionHandler.GetStatsHandler)
 
-	// 统计路由
-	apiMux.HandleFunc("/api/stats", statsHandler.Stats)
+	// 用户偏好设置路由
+	protectedApiMux.HandleFunc("GET /api/user/preferences", userHandler.GetPreferencesHandler)
+	protectedApiMux.HandleFunc("PUT /api/user/preferences", userHandler.UpdatePreferencesHandler)
 
-	// 为API路由添加中间件
-	apiHandler := middleware.LoggingMiddleware(
+
+	// Apply all middlewares (logging, CORS, Auth) to protected API routes
+	protectedApiHandler := middleware.LoggingMiddleware(
 		middleware.CORSMiddleware(
-			middleware.AuthMiddleware(authService)(apiMux),
+			middleware.AuthMiddleware(authService)(protectedApiMux),
 		),
 	)
-	mux.Handle("/", apiHandler)
+	// Use a more specific path for protected routes to avoid conflict if any non-/api/auth/ paths were meant to be public
+	mux.Handle("/api/", protectedApiHandler)
+
 
 	// 添加静态文件服务（仅在生产环境使用）
+	// Note: This setup means static files are served under the main mux, without auth, logging, or CORS from the API middlewares.
+	// If these middlewares are desired for static files too, this needs adjustment.
 	if os.Getenv("ENV") == "production" {
 		fs := http.FileServer(http.Dir("../web/build"))
 		mux.Handle("/static/", http.StripPrefix("/static/", fs))
