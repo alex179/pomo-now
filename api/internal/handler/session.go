@@ -111,3 +111,40 @@ func (h *SessionHandler) updateCurrentSession(w http.ResponseWriter, r *http.Req
 	}
 	response.Success(w, session)
 }
+
+// HandleSessions 处理 /api/sessions 路由
+func (h *SessionHandler) HandleSessions(w http.ResponseWriter, r *http.Request) {
+	h.Sessions(w, r)
+}
+
+// HandleCurrentSession 处理 /api/sessions/current 路由
+func (h *SessionHandler) HandleCurrentSession(w http.ResponseWriter, r *http.Request) {
+	h.CurrentSession(w, r)
+}
+
+// GetStats 处理统计数据请求
+func (h *SessionHandler) GetStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		response.Error(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	user, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		response.UnauthorizedError(w)
+		return
+	}
+
+	period := r.URL.Query().Get("period")
+	if period == "" {
+		period = "today"
+	}
+
+	stats, err := h.sessionService.GetStats(user.ID, period)
+	if err != nil {
+		response.InternalError(w, err, "获取统计数据失败")
+		return
+	}
+
+	response.Success(w, stats)
+}

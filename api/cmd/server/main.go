@@ -9,8 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alex/pomo-now/internal/config"
 	"github.com/alex/pomo-now/internal/handler"
 	"github.com/alex/pomo-now/internal/middleware"
+	"github.com/alex/pomo-now/internal/response"
 	"github.com/alex/pomo-now/internal/service"
 	"github.com/alex/pomo-now/internal/store"
 )
@@ -33,15 +35,31 @@ func main() {
 	if jwtSecret == "" {
 		jwtSecret = "your-secret-key" // 在生产环境中应该使用环境变量
 	}
+
+	// 创建OAuth配置
+	oauthConfig := &config.OAuthConfig{
+		GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+		GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+		AppleClientID:      os.Getenv("APPLE_CLIENT_ID"),
+		ApplePrivateKey:    os.Getenv("APPLE_PRIVATE_KEY"),
+		AppleKeyID:         os.Getenv("APPLE_KEY_ID"),
+		AppleTeamID:        os.Getenv("APPLE_TEAM_ID"),
+		RedirectURL:        os.Getenv("OAUTH_REDIRECT_URL"),
+	}
+
 	authService := service.NewAuthService(dbStore, jwtSecret)
+	oauthService := service.NewOAuthService(oauthConfig, dbStore)
 	taskService := service.NewTaskService(dbStore)
 	sessionService := service.NewSessionService(dbStore)
+	settingsService := service.NewSettingsService(dbStore)
+	userService := service.NewUserService(dbStore)
 
 	// 创建处理器实例
-	authHandler := handler.NewAuthHandler(authService)
+	authHandler := handler.NewAuthHandler(authService, oauthService)
 	taskHandler := handler.NewTaskHandler(taskService)
 	sessionHandler := handler.NewSessionHandler(sessionService)
-	statsHandler := handler.NewStatsHandler(sessionService)
+	statsHandler := handler.NewStatsHandler(sessionService, taskService)
+	settingsHandler := handler.NewSettingsHandler(settingsService, userService)
 
 	// 创建新的ServeMux
 	mux := http.NewServeMux()
@@ -53,17 +71,66 @@ func main() {
 	apiMux.HandleFunc("POST /api/auth/register", authHandler.Register)
 	apiMux.HandleFunc("POST /api/auth/login", authHandler.Login)
 	apiMux.HandleFunc("POST /api/auth/apple", authHandler.AppleLogin)
+	apiMux.HandleFunc("POST /api/auth/google", authHandler.GoogleLogin)
+	apiMux.HandleFunc("GET /api/auth/google/url", authHandler.GetGoogleAuthURL)
+	apiMux.HandleFunc("GET /api/auth/apple/url", authHandler.GetAppleAuthURL)
+	apiMux.HandleFunc("POST /api/auth/logout", authHandler.Logout)
+
+	// 需要认证的路由
+	authMiddleware := middleware.NewAuthMiddleware(authService)
 
 	// 任务路由
-	apiMux.HandleFunc("/api/tasks", taskHandler.Tasks)
-	apiMux.HandleFunc("/api/tasks/{id}", taskHandler.Task)
+	apiMux.Handle("/api/tasks", authMiddleware(http.HandlerFunc(taskHandler.Tasks)))
+	apiMux.Handle("/api/tasks/{id}", authMiddleware(http.HandlerFunc(taskHandler.Task)))
 
 	// 会话路由
-	apiMux.HandleFunc("/api/sessions", sessionHandler.Sessions)
-	apiMux.HandleFunc("/api/sessions/current", sessionHandler.CurrentSession)
+	apiMux.Handle("/api/sessions", authMiddleware(http.HandlerFunc(sessionHandler.Sessions)))
+	apiMux.Handle("/api/sessions/current", authMiddleware(http.HandlerFunc(sessionHandler.CurrentSession)))
 
 	// 统计路由
-	apiMux.HandleFunc("/api/stats", statsHandler.Stats)
+	apiMux.Handle("/api/stats", authMiddleware(http.HandlerFunc(statsHandler.Stats)))
+	apiMux.Handle("/api/stats/hourly", authMiddleware(http.HandlerFunc(statsHandler.HourlyStats)))
+	apiMux.Handle("/api/stats/daily", authMiddleware(http.HandlerFunc(statsHandler.DailyStats)))
+	apiMux.Handle("/api/stats/completed-tasks", authMiddleware(http.HandlerFunc(statsHandler.CompletedTasks)))
+	apiMux.Handle("/api/stats/day-detail", authMiddleware(http.HandlerFunc(statsHandler.DayDetail)))
+
+	// 设置路由
+	apiMux.Handle("/api/settings/pomodoro", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			settingsHandler.GetPomodoroSettings(w, r)
+		case http.MethodPut:
+			settingsHandler.UpdatePomodoroSettings(w, r)
+		default:
+			response.Error(w, http.StatusMethodNotAllowed, "方法不允许")
+		}
+	})))
+
+	apiMux.Handle("/api/settings/notification", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			settingsHandler.GetNotificationSettings(w, r)
+		case http.MethodPut:
+			settingsHandler.UpdateNotificationSettings(w, r)
+		default:
+			response.Error(w, http.StatusMethodNotAllowed, "方法不允许")
+		}
+	})))
+
+	// 用户管理路由
+	apiMux.Handle("/api/user/profile", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			settingsHandler.GetUserProfile(w, r)
+		case http.MethodPut:
+			settingsHandler.UpdateUserProfile(w, r)
+		default:
+			response.Error(w, http.StatusMethodNotAllowed, "方法不允许")
+		}
+	})))
+
+	apiMux.Handle("/api/user/change-password", authMiddleware(http.HandlerFunc(settingsHandler.ChangePassword)))
+	apiMux.Handle("/api/user/change-email", authMiddleware(http.HandlerFunc(settingsHandler.UpdateEmail)))
 
 	// 为API路由添加中间件
 	apiHandler := middleware.LoggingMiddleware(

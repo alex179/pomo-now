@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/alex/pomo-now/internal/model"
+	"github.com/alex/pomo-now/internal/response"
 	"github.com/alex/pomo-now/internal/service"
 )
 
@@ -22,6 +23,11 @@ var publicAuthEndpoints = map[string]bool{
 	"/api/auth/apple":    true,
 }
 
+// NewAuthMiddleware 创建新的认证中间件
+func NewAuthMiddleware(authService *service.AuthService) func(http.Handler) http.Handler {
+	return AuthMiddleware(authService)
+}
+
 // AuthMiddleware 处理JWT认证
 func AuthMiddleware(authService *service.AuthService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -34,18 +40,18 @@ func AuthMiddleware(authService *service.AuthService) func(http.Handler) http.Ha
 
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				response.UnauthorizedError(w)
 				return
 			}
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				http.Error(w, "Invalid authorization header", http.StatusUnauthorized)
+				response.UnauthorizedError(w)
 				return
 			}
 			token := parts[1]
 			user, err := authService.ValidateToken(token)
 			if err != nil || user == nil {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				response.UnauthorizedError(w)
 				return
 			}
 			ctx := context.WithValue(r.Context(), UserContextKey, user)

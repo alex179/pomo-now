@@ -22,7 +22,7 @@ func NewTaskHandler(taskService *service.TaskService) *TaskHandler {
 	}
 }
 
-// Tasks 处理任务列表和创建请求
+// Tasks 处理任务列表请求
 func (h *TaskHandler) Tasks(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok {
@@ -40,7 +40,7 @@ func (h *TaskHandler) Tasks(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Task 处理单个任务的获取、更新和删除请求
+// Task 处理单个任务请求
 func (h *TaskHandler) Task(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.GetUserFromContext(r.Context())
 	if !ok {
@@ -138,4 +138,79 @@ func (h *TaskHandler) deleteTask(w http.ResponseWriter, r *http.Request, user *m
 	}
 
 	response.NoContent(w)
+}
+
+// HandleTasks 处理 /api/tasks 路由
+func (h *TaskHandler) HandleTasks(w http.ResponseWriter, r *http.Request) {
+	h.Tasks(w, r)
+}
+
+// HandleTaskByID 处理 /api/tasks/{id} 路由
+func (h *TaskHandler) HandleTaskByID(w http.ResponseWriter, r *http.Request) {
+	h.Task(w, r)
+}
+
+// GetTasks 公共方法用于路由
+func (h *TaskHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	h.listTasks(w, r, user)
+}
+
+// CreateTask 公共方法用于路由
+func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	h.createTask(w, r, user)
+}
+
+// GetTask 公共方法用于路由
+func (h *TaskHandler) GetTask(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	taskID := r.PathValue("id")
+	if taskID == "" {
+		response.Error(w, http.StatusBadRequest, "task id is required")
+		return
+	}
+	h.getTask(w, r, user, taskID)
+}
+
+// UpdateTask 公共方法用于路由
+func (h *TaskHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	taskID := r.PathValue("id")
+	if taskID == "" {
+		response.Error(w, http.StatusBadRequest, "task id is required")
+		return
+	}
+	h.updateTask(w, r, user, taskID)
+}
+
+// DeleteTask 公共方法用于路由
+func (h *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	taskID := r.PathValue("id")
+	if taskID == "" {
+		response.Error(w, http.StatusBadRequest, "task id is required")
+		return
+	}
+	h.deleteTask(w, r, user, taskID)
 }

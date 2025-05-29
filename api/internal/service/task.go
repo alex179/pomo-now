@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	apperrors "github.com/alex/pomo-now/internal/errors"
 	"github.com/alex/pomo-now/internal/model"
@@ -72,4 +73,9 @@ func (s *TaskService) DeleteTask(ctx context.Context, id, userID string) error {
 	}
 
 	return s.store.DeleteTask(id)
+}
+
+// GetCompletedTasksForDate 获取指定日期完成的任务
+func (s *TaskService) GetCompletedTasksForDate(userID string, date time.Time, limit int) ([]*model.TaskCompletion, error) {
+	return s.store.GetCompletedTasksForDate(userID, date, limit)
 }

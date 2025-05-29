@@ -35,8 +35,15 @@ func (s *AuthService) Register(req *model.UserRegistration) (*model.AuthResponse
 		return nil, apperrors.ErrEmailExists
 	}
 
-	// 创建用户
-	user, err := s.store.CreateUser(req.Email, req.Password)
+	var user *model.User
+
+	// 如果密码为空，说明是OAuth用户
+	if req.Password == "" {
+		user, err = s.store.CreateOAuthUser(req.Email, req.Username, "oauth")
+	} else {
+		user, err = s.store.CreateUser(req.Email, req.Password)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -64,9 +71,12 @@ func (s *AuthService) Login(req *model.UserLogin) (*model.AuthResponse, error) {
 		return nil, apperrors.ErrUserNotFound
 	}
 
-	// 验证密码
-	if !s.store.VerifyPassword(user, req.Password) {
-		return nil, apperrors.ErrInvalidCredentials
+	// 对于OAuth用户（密码为空），跳过密码验证
+	if req.Password != "" {
+		// 验证密码
+		if !s.store.VerifyPassword(user, req.Password) {
+			return nil, apperrors.ErrInvalidCredentials
+		}
 	}
 
 	// 生成JWT token
@@ -140,4 +150,49 @@ func (s *AuthService) ValidateToken(tokenString string) (*model.User, error) {
 	}
 
 	return nil, jwt.ErrSignatureInvalid
+}
+
+// UpdateUserAvatar 更新用户头像
+func (s *AuthService) UpdateUserAvatar(userID string, avatarURL string) error {
+	return s.store.UpdateUserAvatar(nil, userID, avatarURL)
+}
+
+// UpdateUser 更新用户信息
+func (s *AuthService) UpdateUser(userID string, req *model.UserUpdate) (*model.User, error) {
+	// 获取当前用户信息
+	user, err := s.store.GetUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, apperrors.ErrUserNotFound
+	}
+
+	// 如果更新邮箱，检查是否已存在
+	if req.Email != "" && req.Email != user.Email {
+		existingUser, err := s.store.GetUserByEmail(req.Email)
+		if err != nil {
+			return nil, err
+		}
+		if existingUser != nil {
+			return nil, apperrors.ErrEmailExists
+		}
+		user.Email = req.Email
+	}
+
+	// 更新其他字段
+	if req.Username != "" {
+		user.Username = req.Username
+	}
+	if req.Avatar != "" {
+		user.Avatar = req.Avatar
+	}
+
+	// 保存更新
+	err = s.store.UpdateUser(user)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

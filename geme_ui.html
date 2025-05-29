@@ -22,7 +22,7 @@
             position: relative;
             flex-shrink: 0;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            background-color: #ffffff; /* Default background */
+            background-color: #ffffff;
         }
         
         .timer-gradient {
@@ -36,146 +36,216 @@
         .blue-gradient {
             background: linear-gradient(135deg, #56CCF2 0%, #2F80ED 100%);
         }
-        
-        .fade-in {
-            animation: fadeIn 0.8s ease-in-out;
+
+        /* --- 最终版动态启动页样式 --- */
+        .dynamic-bg {
+            position: relative;
+            overflow: hidden;
+        }
+        .tomato-bg-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            z-index: 1;
+        }
+        .tomato-float {
+            position: absolute;
+            bottom: -60px; /* Start further down */
+            color: rgba(255, 255, 255, 0.1); /* Even more subtle */
+            animation: drift 20s infinite linear;
+            font-size: 24px; /* Slightly larger for more presence */
+        }
+        .tomato-float.fa-lemon { /* Using lemon as a slice variant */
+            font-size: 20px;
+            color: rgba(255,255,255,0.08);
+        }
+        @keyframes drift {
+            from { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+            25% { opacity: 1; }
+            75% { opacity: 1; }
+            to { transform: translateY(-950px) translateX(var(--drift-x)) rotate(720deg); opacity: 0; }
+        }
+
+        .glass-panel-showcase {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px); /* Softer blur to not obscure background too much */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 36px; /* More rounded */
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+            animation: float-panel-gentle 12s infinite alternate ease-in-out;
+            width: 280px; /* Larger panel */
+            height: 280px; /* Larger panel */
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .task-card-showcase {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
+            padding: 12px 16px;
+            width: 220px; /* Wider task cards */
+            animation: float-task-cards 10s infinite ease-in-out;
+        }
+
+
+        @keyframes float-panel-gentle {
+            from { transform: translateY(-10px) rotateX(3deg) rotateY(-4deg) scale(0.98); }
+            to { transform: translateY(10px) rotateX(-3deg) rotateY(4deg) scale(1.02); }
+        }
+
+        @keyframes float-task-cards {
+            from { transform: translateY(-6px) rotateZ(-2deg); }
+            to { transform: translateY(6px) rotateZ(2deg); }
         }
         
-        .hover-scale {
-            transition: transform 0.2s ease;
+        @keyframes pulse-beat-strong {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
         }
         
-        .hover-scale:hover {
-            transform: scale(1.05);
+        @keyframes rotate-leaf-continuous {
+            from { transform: rotate(15deg) scale(1); }
+            50% { transform: rotate(25deg) scale(1.05); }
+            to { transform: rotate(15deg) scale(1); }
         }
-        
-        .input-focus:focus {
-            border-color: #ff6b6b !important;
-            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+
+        @keyframes grow-bar-impact {
+            from { transform: scaleY(0.1); opacity: 0.5; }
+            to { transform: scaleY(1); opacity: 1; }
         }
+        .bar-item {
+            width: 40px; /* Wider bars */
+            background: rgba(255,255,255,0.6);
+            border-radius: 8px 8px 0 0; /* Rounded tops */
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+            transform-origin: bottom;
+        }
+
+        .button-pulse-strong {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+            animation: pulse-glow-strong 1.8s infinite;
+        }
+        @keyframes pulse-glow-strong {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8); transform: scale(1); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 255, 255, 0); transform: scale(1.03);}
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); transform: scale(1); }
+        }
+        /* --- 样式结束 --- */
         
+        .fade-in { animation: fadeIn 0.8s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .hover-scale { transition: transform 0.2s ease; }
+        .hover-scale:hover { transform: scale(1.05); }
+        .input-focus:focus { border-color: #ff6b6b !important; box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .tab-active {
-            border-bottom-width: 2px;
-            border-color: #ff6b6b;
-            color: #ff6b6b;
-            font-weight: 600;
-        }
+        .tab-active { border-bottom-width: 2px; border-color: #ff6b6b; color: #ff6b6b; font-weight: 600; }
         .tab-inactive { color: #6b7280; }
-
         .pulse-once { animation: pulse-once 1s ease-out; }
-        @keyframes pulse-once {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
+        @keyframes pulse-once { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         .shake { animation: shake 0.5s ease-in-out; }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         .progress-ring { transform: rotate(-90deg); }
-        .progress-circle {
-            fill: none;
-            stroke-width: 10;
-            stroke-linecap: round;
-            transition: stroke-dasharray 0.5s ease-out;
-        }
+        .progress-circle { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dasharray 0.5s ease-out; }
     </style>
 </head>
 <body class="bg-gray-100 flex gap-6 p-6 overflow-x-auto no-scrollbar">
 
-    <div class="phone-frame timer-gradient flex flex-col justify-between p-8 text-white">
-        <div class="text-left">
-            <h1 class="text-4xl font-bold leading-tight mb-3">投入专注<br>心无旁骛</h1>
-            <p class="text-white/80 font-light">告别干扰，享受沉浸式的工作与学习体验。</p>
+    <div class="phone-frame timer-gradient dynamic-bg flex flex-col justify-around p-8 text-white">
+        <div class="tomato-bg-container">
+            <i class="fas fa-seedling tomato-float" style="left: 10%; animation-duration: 18s; --drift-x: 10px;"></i>
+            <i class="fas fa-lemon tomato-float" style="left: 20%; animation-duration: 22s; --drift-x: -15px;"></i>
+            <i class="fas fa-seedling tomato-float" style="left: 30%; animation-duration: 16s; --drift-x: 5px;"></i>
+            <i class="fas fa-lemon tomato-float" style="left: 50%; animation-duration: 24s; --drift-x: -5px;"></i>
+            <i class="fas fa-seedling tomato-float" style="left: 70%; animation-duration: 15s; --drift-x: 20px;"></i>
+            <i class="fas fa-lemon tomato-float" style="left: 85%; animation-duration: 25s; --drift-x: -10px;"></i>
+             <i class="fas fa-seedling tomato-float" style="left: 40%; animation-duration: 20s; --drift-x: 12px;"></i>
+            <i class="fas fa-lemon tomato-float" style="left: 60%; animation-duration: 17s; --drift-x: -8px;"></i>
         </div>
-        <div class="flex-grow flex items-center justify-center">
-            <div class="w-64 h-64 relative fade-in">
-                <svg viewBox="0 0 100 100" class="w-full h-full">
-                    <circle cx="50" cy="50" r="48" fill="#FFFFFF" opacity="0.8"/>
-                    <circle cx="50" cy="50" r="45" fill="#ffcdd2"/>
-                    <path d="M50 5 L50 95" stroke="#FFFFFF" stroke-width="2" opacity="0.7"/>
-                    <path d="M5 50 L95 50" stroke="#FFFFFF" stroke-width="2" opacity="0.7"/>
-                    <path d="M15 15 L85 85" stroke="#FFFFFF" stroke-width="2" opacity="0.7"/>
-                    <path d="M15 85 L85 15" stroke="#FFFFFF" stroke-width="2" opacity="0.7"/>
-                    <circle cx="50" cy="50" r="10" fill="#FFFFFF" opacity="0.6"/>
-                </svg>
-                <div class="absolute top-[-10px] left-1/2 -translate-x-1/2 w-8 h-8 bg-green-400 rounded-full transform rotate-45" style="border-bottom-right-radius: 0;"></div>
-            </div>
+        <div class="text-center z-10 mt-10">
+            <h1 class="text-5xl font-bold leading-tight mb-4 drop-shadow-lg">沉浸专注<br>时间由你定义</h1>
+            <p class="text-white/90 font-light text-lg">告别干扰，享受沉浸式的工作与学习体验。</p>
         </div>
-        <div class="flex justify-center space-x-2">
-            <div class="w-8 h-2 bg-white rounded-full"></div>
-            <div class="w-2 h-2 bg-white/30 rounded-full"></div>
-            <div class="w-2 h-2 bg-white/30 rounded-full"></div>
-        </div>
-    </div>
-
-    <div class="phone-frame timer-gradient flex flex-col justify-between p-8 text-white">
-        <div class="text-left">
-            <h1 class="text-4xl font-bold leading-tight mb-3">清晰规划<br>井然有序</h1>
-            <p class="text-white/80 font-light">将目标分解，轻松管理每一个任务和想法。</p>
-        </div>
-        <div class="flex-grow flex items-center justify-center">
-            <div class="w-64 h-64 relative fade-in">
-                <div class="absolute -top-4 -left-4 w-full h-full bg-white/20 rounded-2xl transform -rotate-12"></div>
-                <div class="absolute w-full h-full bg-white/90 rounded-2xl shadow-lg p-6 transform -rotate-3 text-red-500">
-                    <div class="flex items-center space-x-3 mb-4">
-                        <i class="fas fa-seedling text-2xl"></i><div class="w-4/5 h-4 bg-red-200 rounded-full"></div>
-                    </div>
-                    <div class="flex items-center space-x-3 mb-4 opacity-50">
-                        <i class="fas fa-check-circle text-2xl"></i><div class="w-3/5 h-4 bg-red-200 rounded-full line-through"></div>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-seedling text-2xl"></i><div class="w-4/5 h-4 bg-red-200 rounded-full"></div>
-                    </div>
+        <div class="flex-grow flex items-center justify-center z-10 my-4">
+            <div class="glass-panel-showcase flex items-center justify-center">
+                <div class="w-56 h-56 bg-white/25 rounded-full relative shadow-2xl">
+                    <div class="absolute inset-3 bg-white/40 rounded-full"></div>
+                    <div class="absolute top-1/2 left-1/2 w-1.5 h-20 bg-white rounded-full -mt-20 origin-bottom" style="animation: rotate-leaf-continuous 7s infinite alternate ease-in-out;"></div>
+                    <i class="fas fa-seedling text-white text-7xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow-xl" style="animation: pulse-beat-strong 3.5s infinite ease-in-out;"></i>
                 </div>
             </div>
         </div>
-        <div class="flex justify-center space-x-2">
-            <div class="w-2 h-2 bg-white/30 rounded-full"></div>
-            <div class="w-8 h-2 bg-white rounded-full"></div>
-            <div class="w-2 h-2 bg-white/30 rounded-full"></div>
+        <div class="flex justify-center space-x-2 z-10 mb-8">
+            <div class="w-10 h-2.5 bg-white rounded-full"></div>
+            <div class="w-2.5 h-2.5 bg-white/50 rounded-full"></div>
+            <div class="w-2.5 h-2.5 bg-white/50 rounded-full"></div>
         </div>
     </div>
 
-    <div class="phone-frame timer-gradient flex flex-col justify-between p-8 text-white">
-        <div class="text-left">
-            <h1 class="text-4xl font-bold leading-tight mb-3">见证成长<br>每一步都算数</h1>
-            <p class="text-white/80 font-light">通过数据回顾你的努力，持续激励自我。</p>
+    <div class="phone-frame timer-gradient dynamic-bg flex flex-col justify-around p-8 text-white">
+        <div class="tomato-bg-container">
+             <i class="fas fa-seedling tomato-float" style="left: 5%; animation-duration: 23s; --drift-x: -12px;"></i>
+            <i class="fas fa-lemon tomato-float" style="left: 95%; animation-duration: 19s; --drift-x: 8px;"></i>
         </div>
-        <div class="flex-grow flex items-center justify-center">
-            <div class="w-64 h-64 relative fade-in flex items-end justify-around p-4">
-                 <div class="flex flex-col-reverse items-center w-12">
-                     <div class="w-10 h-10 bg-white/80 rounded-full relative"><div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-4 bg-green-400 rounded-t-full"></div></div>
-                     <div class="w-10 h-10 bg-white/80 rounded-full relative -mb-3"><div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-4 bg-green-400 rounded-t-full"></div></div>
-                 </div>
-                 <div class="flex flex-col-reverse items-center w-12">
-                     <div class="w-10 h-10 bg-white/80 rounded-full relative"><div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-4 bg-green-400 rounded-t-full"></div></div>
-                     <div class="w-10 h-10 bg-white/80 rounded-full relative -mb-3"><div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-4 bg-green-400 rounded-t-full"></div></div>
-                     <div class="w-10 h-10 bg-white/80 rounded-full relative -mb-3"><div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-4 bg-green-400 rounded-t-full"></div></div>
-                 </div>
-                 <div class="flex flex-col-reverse items-center w-12">
-                     <div class="w-10 h-10 bg-white/80 rounded-full relative"><div class="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-4 bg-green-400 rounded-t-full"></div></div>
-                 </div>
+        <div class="text-center z-10 mt-10">
+            <h1 class="text-5xl font-bold leading-tight mb-4 drop-shadow-lg">清晰规划<br>井然有序</h1>
+            <p class="text-white/90 font-light text-lg">将目标分解，轻松管理每一个任务和想法。</p>
+        </div>
+        <div class="flex-grow flex flex-col items-center justify-center z-10 space-y-3 my-4 w-full">
+            <div class="task-card-showcase flex items-center space-x-4 opacity-90" style="animation-duration: 9s;">
+                <i class="fas fa-seedling text-white text-3xl drop-shadow-md"></i>
+                <div class="flex-1 space-y-1.5">
+                    <div class="w-full h-3 bg-white/70 rounded-full"></div>
+                    <div class="w-3/4 h-3 bg-white/50 rounded-full"></div>
+                </div>
+            </div>
+            <div class="task-card-showcase flex items-center space-x-4" style="animation-duration: 11s; animation-direction: alternate-reverse; margin-left: 20px;">
+                <i class="fas fa-check-circle text-white text-3xl drop-shadow-md opacity-70"></i>
+                 <div class="flex-1 space-y-1.5">
+                    <div class="w-full h-3 bg-white/50 rounded-full line-through"></div>
+                </div>
+            </div>
+             <div class="task-card-showcase flex items-center space-x-4 opacity-90" style="animation-duration: 10s; margin-left: -10px;">
+                <i class="fas fa-seedling text-white text-3xl drop-shadow-md"></i>
+                <div class="flex-1 space-y-1.5">
+                    <div class="w-full h-3 bg-white/70 rounded-full"></div>
+                    <div class="w-1/2 h-3 bg-white/50 rounded-full"></div>
+                </div>
             </div>
         </div>
-        <div class="text-center">
-            <button class="bg-white text-red-500 px-12 py-4 rounded-2xl font-semibold text-lg hover-scale shadow-lg">
-                立即开启
+        <div class="flex justify-center space-x-2 z-10 mb-8">
+            <div class="w-2.5 h-2.5 bg-white/50 rounded-full"></div>
+            <div class="w-10 h-2.5 bg-white rounded-full"></div>
+            <div class="w-2.5 h-2.5 bg-white/50 rounded-full"></div>
+        </div>
+    </div>
+
+    <div class="phone-frame timer-gradient dynamic-bg flex flex-col justify-around p-8 text-white">
+         <div class="tomato-bg-container">
+            <i class="fas fa-seedling tomato-float" style="left: 25%; animation-duration: 21s; --drift-x: 15px;"></i>
+            <i class="fas fa-lemon tomato-float" style="left: 75%; animation-duration: 18s; --drift-x: -10px;"></i>
+        </div>
+        <div class="text-center z-10 mt-10">
+            <h1 class="text-5xl font-bold leading-tight mb-4 drop-shadow-lg">数据见证<br>你的每一次进步</h1>
+            <p class="text-white/90 font-light text-lg">通过数据回顾你的努力，持续激励自我。</p>
+        </div>
+        <div class="flex-grow flex items-center justify-center z-10 my-4">
+            <div class="w-64 h-56 glass-panel-showcase flex items-end justify-around p-6 pt-10">
+                <div class="bar-item" style="height: 50%; animation: grow-bar-impact 1.2s .2s ease-out backwards;"></div>
+                <div class="bar-item" style="height: 80%; animation: grow-bar-impact 1.2s .4s ease-out backwards;"></div>
+                <div class="bar-item" style="height: 30%; animation: grow-bar-impact 1.2s .6s ease-out backwards;"></div>
+                <div class="bar-item" style="height: 65%; animation: grow-bar-impact 1.2s .8s ease-out backwards;"></div>
+            </div>
+        </div>
+        <div class="text-center z-10 mb-8">
+            <button class="bg-white text-red-500 px-16 py-5 rounded-2xl font-semibold text-xl hover-scale shadow-xl button-pulse-strong">
+                立即体验
             </button>
-            <div class="flex justify-center space-x-2 mt-6">
-                <div class="w-2 h-2 bg-white/30 rounded-full"></div>
-                <div class="w-2 h-2 bg-white/30 rounded-full"></div>
-                <div class="w-8 h-2 bg-white rounded-full"></div>
+            <div class="flex justify-center space-x-2 mt-8">
+                <div class="w-2.5 h-2.5 bg-white/50 rounded-full"></div>
+                <div class="w-2.5 h-2.5 bg-white/50 rounded-full"></div>
+                <div class="w-10 h-2.5 bg-white rounded-full"></div>
             </div>
         </div>
     </div>
