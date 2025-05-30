@@ -2,9 +2,9 @@ name: 🚀 CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 env:
   GO_VERSION: "1.21"
@@ -23,6 +23,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: api/go.mod
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
